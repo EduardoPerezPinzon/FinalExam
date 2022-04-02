@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -25,67 +24,51 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.DateFormat;
-import java.util.Date;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class UserHistory extends AppCompatActivity {
+public class History extends AppCompatActivity {
     private ListView listView;
     private Button btnBack;
-    AdapterUserHistories userHistories;
-    AdapterUserHistory userHistory;
+    AdapterShoppings orders;
 
-    public static ArrayList<AdapterUserHistory> userStoryList = new ArrayList<>();
+    public static ArrayList<AdapterShopping> shoppingList = new ArrayList<>();
+
+    String url = "https://proyectoconclusion.000webhostapp.com/history.php";
+    AdapterShopping order;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_user_history);
+        setContentView(R.layout.activity_history);
 
         listView = (ListView) findViewById(R.id.listView);
         btnBack = (Button) findViewById(R.id.btnBack);
 
-        userHistories = new AdapterUserHistories(this, userStoryList);
-        listView.setAdapter(userHistories);
+        orders = new AdapterShoppings(this, shoppingList);
+        listView.setAdapter(orders);
 
         String user = getIntent().getStringExtra("user");
-        getHistoryFromUser(user);
+        String date = getIntent().getStringExtra("date");
 
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
-                Date date = userStoryList.get(position).getDate();
-                Intent intent = new Intent(UserHistory.this, History.class);
-
-                DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                String formattedDate = formatter.format(date);
-
-                intent.putExtra("date", formattedDate);
-                intent.putExtra("user", user);
-                startActivity(intent);
-            }
-        });
+        fillOrders(user, date);
 
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(UserHistory.this, Categories.class);
+                Intent intent = new Intent(History.this, UserHistory.class);
                 intent.putExtra("user", user);
                 startActivity(intent);
             }
         });
     }
 
-    private void getHistoryFromUser(String user) {
-        String url = "https://proyectoconclusion.000webhostapp.com/userhistory.php";
+    private void fillOrders(String user, String date) {
         StringRequest request = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                userStoryList.clear();
+                shoppingList.clear();
                 try {
                     JSONObject jsonObject = new JSONObject(response);
                     String success = jsonObject.getString("success");
@@ -93,18 +76,14 @@ public class UserHistory extends AppCompatActivity {
                     if (success.equals("1")) {
                         for (int i = 0; i < jsonArray.length(); i++) {
                             JSONObject object = jsonArray.getJSONObject(i);
-                            String date = object.getString("date");
+                            String name = object.getString("name");
+                            String amount = object.getString("amount");
+                            String price = object.getString("price");
+                            String user = object.getString("user");
 
-                            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                            try {
-                                Date formatDate = (Date) format.parse(date);
-                                userHistory = new AdapterUserHistory(formatDate);
-                                userStoryList.add(userHistory);
-                                userHistories.notifyDataSetChanged();
-                            } catch (ParseException e) {
-                                Log.e("error", e.toString());
-                                e.printStackTrace();
-                            }
+                            order = new AdapterShopping(name, user, amount, price);
+                            shoppingList.add(order);
+                            orders.notifyDataSetChanged();
                         }
                     }
                 } catch (JSONException e) {
@@ -114,7 +93,7 @@ public class UserHistory extends AppCompatActivity {
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Toast.makeText(UserHistory.this, error.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(History.this, error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         }) {
             @Nullable
@@ -122,6 +101,7 @@ public class UserHistory extends AppCompatActivity {
             protected Map<String, String> getParams() throws AuthFailureError {
                 Map<String, String> params = new HashMap<String, String>();
                 params.put("user", user);
+                params.put("date", date);
                 return params;
             }
         };
