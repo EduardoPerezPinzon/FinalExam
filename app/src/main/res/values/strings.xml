@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Test App</string>
+
+    <string name="btn_add_contact"><u>Continuar comprando</u></string>
+</resources>
