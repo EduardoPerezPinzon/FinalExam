@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -25,6 +26,8 @@ import java.util.ArrayList;
 
 public class Categories extends AppCompatActivity {
     private ListView listView;
+    private Button btnHistory;
+
     AdapterCategories categories;
 
     public static ArrayList<AdapterCategory> categoryList = new ArrayList<>();
@@ -37,18 +40,29 @@ public class Categories extends AppCompatActivity {
         setContentView(R.layout.activity_categories);
 
         listView = (ListView) findViewById(R.id.listView);
+        btnHistory = (Button) findViewById(R.id.btnHistory);
+
         categories = new AdapterCategories(this, categoryList);
         listView.setAdapter(categories);
 
+        String user = getIntent().getStringExtra("user");
         fillCategories();
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
                 String categoryId = categoryList.get(position).getId();
-                String user = getIntent().getStringExtra("user");
                 Intent intent = new Intent(Categories.this, Products.class);
                 intent.putExtra("categoryId", categoryId);
+                intent.putExtra("user", user);
+                startActivity(intent);
+            }
+        });
+
+        btnHistory.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(Categories.this, UserHistory.class);
                 intent.putExtra("user", user);
                 startActivity(intent);
             }
